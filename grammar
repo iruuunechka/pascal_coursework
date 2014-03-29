@@ -6,7 +6,7 @@ var_declaration -> identifier_list COLON type
 identifier_list -> IDENTIFIER | IDENTIFIER COMMA identifier_list
 
 function_list -> function_declaration  function_list |    
-function_declaration -> function_heading SEMICOLON block SEMICOLON
+function_declaration -> function_heading SEMICOLON var_block block SEMICOLON
 function_heading -> FUNCTION IDENTIFIER parameter_list COLON type
 parameter_list -> LPAREN parameter_block RPAREN |
 parameter_block -> parameter | parameter SEMICOLON parameter_block
