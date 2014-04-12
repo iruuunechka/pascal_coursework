@@ -52,5 +52,5 @@ SIGN : '+' | '-' ;
 IDENTIFIER : [a-zA-Z][a-zA-Z0-9]* ;
 NUMBER : [0-9]+ ;
 CHAR_EXPRESSION : '\''.'\'' ;
-STRING_EXPRESSION : '\''.*?'\'' ;
+STRING_EXPRESSION : '"'.*?'"' ;
 WS :  [ \t\r\n]+ -> skip ;

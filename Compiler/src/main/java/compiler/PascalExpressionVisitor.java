@@ -128,24 +128,28 @@ public class PascalExpressionVisitor {
             reg.addInstruction(new LdcInsnNode(Integer.valueOf(context.NUMBER().getText())));
             return Type.INT_TYPE;
         } else if (context.name() != null) {
-            String varName = context.name().IDENTIFIER().getText();
-            if (!reg.hasGlobalVar(varName)) {
-                throw new IllegalStateException("Undefined variable" + varName);
-            }
-            Type varType = reg.getGlobalVarType(varName);
-            if (context.name().expression() != null) {
-                Utils.checkType(varType, Type.getType(String.class));
-                Utils.checkType(visit(context.name().expression()), Type.INT_TYPE);
-                reg.addInstruction(new FieldInsnNode(Opcodes.GETSTATIC, reg.getProgramName(), varName, varType.getDescriptor()));
-                reg.addInstruction(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(String.class), "charAt", Type.getMethodDescriptor(Type.CHAR_TYPE, Type.INT_TYPE)));
-                return Type.CHAR_TYPE;
-            } else {
-                reg.addInstruction(new FieldInsnNode(Opcodes.GETSTATIC, reg.getProgramName(), varName, varType.getDescriptor()));
-            }
-            return varType;
+            return visit(context.name());
         } else if (context.callStatement() != null) {
             //TODO
         }
         return Type.VOID_TYPE;
+    }
+
+    public Type visit(GrammarParser.NameContext context) {
+        String varName = context.IDENTIFIER().getText();
+        if (!reg.hasGlobalVar(varName)) {
+            throw new IllegalStateException("Undefined variable" + varName);
+        }
+        Type varType = reg.getGlobalVarType(varName);
+        if (context.expression() != null) {
+            Utils.checkType(varType, Type.getType(String.class));
+            Utils.checkType(visit(context.expression()), Type.INT_TYPE);
+            reg.addInstruction(new FieldInsnNode(Opcodes.GETSTATIC, reg.getProgramName(), varName, varType.getDescriptor()));
+            reg.addInstruction(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(String.class), "charAt", Type.getMethodDescriptor(Type.CHAR_TYPE, Type.INT_TYPE)));
+            return Type.CHAR_TYPE;
+        } else {
+            reg.addInstruction(new FieldInsnNode(Opcodes.GETSTATIC, reg.getProgramName(), varName, varType.getDescriptor()));
+        }
+        return varType;
     }
 }

@@ -82,10 +82,39 @@ public class PascalStatementVisitor {
     }
 
     private void visit(GrammarParser.WhileStatementContext context) {
-
+        LabelNode continueL = new LabelNode();
+        reg.addInstruction(continueL);
+        expVisitor.visit(context.expression());
+        LabelNode breakL = new LabelNode();
+        reg.addInstruction(new JumpInsnNode(Opcodes.IFEQ, breakL));
+        visit(context.statement());
+        reg.addInstruction(new JumpInsnNode(Opcodes.GOTO, continueL));
+        reg.addInstruction(breakL);
     }
 
     private void visit(GrammarParser.ForStatementContext context) {
+        String forVarName = context.assignmentStatement().name().IDENTIFIER().getText();
+        Type forVarType = reg.getGlobalVarType(forVarName);
+        Utils.checkType(forVarType, Type.INT_TYPE);
+        visit(context.assignmentStatement());
+        LabelNode startL = new LabelNode();
+        reg.addInstruction(startL);
+        expVisitor.visit(context.expression());
+        expVisitor.visit(context.assignmentStatement().name());
+        LabelNode breakL = new LabelNode();
+        boolean direction = "TO".equals(context.getChild(2).getText());
+        reg.addInstruction(new JumpInsnNode(direction ? Opcodes.IF_ICMPLT : Opcodes.IF_ICMPGT, breakL));
+        visit(context.statement());
+        LabelNode continueL = new LabelNode();
+        reg.addInstruction(continueL);
+
+        expVisitor.visit(context.assignmentStatement().name());
+        reg.addInstruction(new InsnNode(direction ? Opcodes.ICONST_1 : Opcodes.ICONST_M1));
+        reg.addInstruction(new InsnNode(Opcodes.IADD));
+        reg.addInstruction(new FieldInsnNode(Opcodes.PUTSTATIC, reg.getProgramName(), forVarName, forVarType.getDescriptor()));
+
+        reg.addInstruction(new JumpInsnNode(Opcodes.GOTO, startL));
+        reg.addInstruction(breakL);
 
     }
 
