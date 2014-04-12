@@ -7,6 +7,7 @@ import org.objectweb.asm.tree.*;
 import parser.GrammarParser;
 
 import java.io.PrintStream;
+import java.util.Stack;
 
 /**
  * @author Irene Petrova
@@ -14,6 +15,8 @@ import java.io.PrintStream;
 public class PascalStatementVisitor {
     private final PascalRegistry reg;
     private final PascalExpressionVisitor expVisitor;
+    private final Stack<LabelNode> continueLabels = new Stack<>();
+    private final Stack<LabelNode> breakLabels = new Stack<>();
 
     public PascalStatementVisitor(PascalRegistry reg) {
         this.reg = reg;
@@ -83,16 +86,25 @@ public class PascalStatementVisitor {
 
     private void visit(GrammarParser.WhileStatementContext context) {
         LabelNode continueL = new LabelNode();
+        continueLabels.push(continueL);
+        LabelNode breakL = new LabelNode();
+        breakLabels.push(breakL);
         reg.addInstruction(continueL);
         expVisitor.visit(context.expression());
-        LabelNode breakL = new LabelNode();
         reg.addInstruction(new JumpInsnNode(Opcodes.IFEQ, breakL));
         visit(context.statement());
         reg.addInstruction(new JumpInsnNode(Opcodes.GOTO, continueL));
         reg.addInstruction(breakL);
+        breakLabels.pop();
+        continueLabels.pop();
     }
 
     private void visit(GrammarParser.ForStatementContext context) {
+        LabelNode breakL = new LabelNode();
+        breakLabels.push(breakL);
+        LabelNode continueL = new LabelNode();
+        continueLabels.push(continueL);
+
         String forVarName = context.assignmentStatement().name().IDENTIFIER().getText();
         Type forVarType = reg.getGlobalVarType(forVarName);
         Utils.checkType(forVarType, Type.INT_TYPE);
@@ -101,11 +113,11 @@ public class PascalStatementVisitor {
         reg.addInstruction(startL);
         expVisitor.visit(context.expression());
         expVisitor.visit(context.assignmentStatement().name());
-        LabelNode breakL = new LabelNode();
+
         boolean direction = "TO".equals(context.getChild(2).getText());
         reg.addInstruction(new JumpInsnNode(direction ? Opcodes.IF_ICMPLT : Opcodes.IF_ICMPGT, breakL));
         visit(context.statement());
-        LabelNode continueL = new LabelNode();
+
         reg.addInstruction(continueL);
 
         expVisitor.visit(context.assignmentStatement().name());
@@ -116,6 +128,8 @@ public class PascalStatementVisitor {
         reg.addInstruction(new JumpInsnNode(Opcodes.GOTO, startL));
         reg.addInstruction(breakL);
 
+        breakLabels.pop();
+        continueLabels.pop();
     }
 
     private void visit(GrammarParser.IfStatementContext context) {
@@ -137,12 +151,16 @@ public class PascalStatementVisitor {
 
     }
 
-    private void visit(GrammarParser.ContinueStatementContext context) {
-
+    private void visit(GrammarParser.BreakStatementContext context) {
+        if (breakLabels.isEmpty())
+            throw new IllegalStateException("Break is outside of loop");
+        reg.addInstruction(new JumpInsnNode(Opcodes.GOTO, breakLabels.peek()));
     }
 
-    private void visit(GrammarParser.BreakStatementContext context) {
-
+    private void visit(GrammarParser.ContinueStatementContext context) {
+        if (continueLabels.isEmpty())
+            throw new IllegalStateException("Continue is outside of loop");
+        reg.addInstruction(new JumpInsnNode(Opcodes.GOTO, continueLabels.peek()));
     }
 
     public void visit(GrammarParser.BlockContext context) {
