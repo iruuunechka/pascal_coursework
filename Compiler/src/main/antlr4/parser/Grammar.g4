@@ -1,44 +1,40 @@
 grammar Grammar;
-program : 'PROGRAM' IDENTIFIER ';' var_block function_list block '.' ;
+program : 'PROGRAM' IDENTIFIER ';' varBlock (functionDeclaration)* block '.' ;
 
-var_block : ('VAR' var_list ';')? ;
-var_list : var_declaration (';' var_declaration)* ;
-var_declaration : IDENTIFIER (',' IDENTIFIER)* ':' TYPE;
+varBlock : ('VAR' varDeclaration (';' varDeclaration)* ';')? ;
+varDeclaration : IDENTIFIER (',' IDENTIFIER)* ':' TYPE;
 
-function_list : (function_declaration)* ;
-function_declaration : function_heading ';' var_block block ';' ;
-function_heading : 'FUNCTION' IDENTIFIER parameter_list ':' TYPE ;
-parameter_list : ('(' var_declaration (';' var_declaration)* ')')? ;
+functionDeclaration : functionHeading ';' varBlock block ';' ;
+functionHeading : 'FUNCTION' IDENTIFIER ('(' varDeclaration (';' varDeclaration)* ')')? ':' TYPE ;
 
 block : 'BEGIN' (statement ';')* 'END' ;
 statement : 'IF' expression 'THEN' statement ('ELSE' statement)?
-            | 'FOR' assignment_statement ('TO' | 'DOWNTO') expression 'DO' statement 
+            | 'FOR' assignmentStatement ('TO' | 'DOWNTO') expression 'DO' statement
             | 'WHILE' expression 'DO' statement 
-            | assignment_statement
+            | assignmentStatement
             | block 
             | 'BREAK' 
             | 'CONTINUE'
             |'READ' '(' IDENTIFIER (',' IDENTIFIER)* ')'
-            |'WRITE' '(' expression_list ')'
-            |IDENTIFIER '(' expression_list ')' ;
+            |'WRITE' '(' expressionList ')'
+            |IDENTIFIER '(' expressionList ')' ;
 
-assignment_statement : IDENTIFIER ('[' expression ']')? ':=' expression ;
-expression : applicative_expr (COMPARATOR applicative_expr)? ;
-applicative_expr : (SIGN)? multiplicative_expr ((SIGN | 'OR') multiplicative_expr)? ;
+assignmentStatement : IDENTIFIER ('[' expression ']')? ':=' expression ;
+expression : applicativeExpr (COMPARATOR applicativeExpr)? ;
+applicativeExpr : (SIGN)? multiplicativeExpr (SIGN  multiplicativeExpr)? ;
 
-multiplicative_expr : term (OPERATOR term)* ;
+multiplicativeExpr : term (OPERATOR term)* ;
 
 term : NUMBER 
       | STRING_EXPRESSION
       | CHAR_EXPRESSION
       | IDENTIFIER ('[' expression ']')?
-      | IDENTIFIER '(' expression_list ')'
-      | '(' expression ')'
-      | 'NOT' term ;
+      | IDENTIFIER '(' expressionList ')'
+      | '(' expression ')';
 
-expression_list : expression (',' expression)* ;
+expressionList : expression (',' expression)* ;
 
-OPERATOR : '*' | '/' | 'DIV' | 'MOD' | 'AND' ;
+OPERATOR : '*' | '/' | 'DIV' | 'MOD' ;
 TYPE : 'INTEGER' | 'STRING' | 'CHAR' ;
 COMPARATOR :  '>=' | '<=' | '=' | '<>' | '>' | '<' ;
 SIGN : '+' | '-' ;
