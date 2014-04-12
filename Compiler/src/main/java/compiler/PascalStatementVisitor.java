@@ -1,11 +1,13 @@
 package compiler;
 
 import compiler.register.PascalRegistry;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import parser.GrammarParser;
 
+import java.io.Console;
 import java.io.PrintStream;
 import java.util.Stack;
 
@@ -57,7 +59,21 @@ public class PascalStatementVisitor {
     }
 
     private void visit(GrammarParser.ReadStatementContext context) {
-
+        for (TerminalNode id : context.IDENTIFIER()) {
+            reg.addInstruction(new MethodInsnNode(Opcodes.INVOKESTATIC, Type.getInternalName(System.class), "console",
+                    Type.getMethodDescriptor(Type.getType(Console.class))));
+            reg.addInstruction(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(Console.class), "readLine",
+                    Type.getMethodDescriptor(Type.getType(String.class))));
+            if (reg.getGlobalVarType(id.getText()).equals(Type.INT_TYPE)) {
+                reg.addInstruction(new MethodInsnNode(Opcodes.INVOKESTATIC, Type.getInternalName(Integer.class), "parseInt",
+                        Type.getMethodDescriptor(Type.INT_TYPE, Type.getType(String.class))));
+            } else if (reg.getGlobalVarType(id.getText()).equals(Type.CHAR_TYPE)) {
+                reg.addInstruction(new InsnNode(Opcodes.ICONST_0));
+                reg.addInstruction(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(String.class), "charAt",
+                        Type.getMethodDescriptor(Type.CHAR_TYPE, Type.INT_TYPE)));
+            }
+            reg.addInstruction(new FieldInsnNode(Opcodes.PUTSTATIC, reg.getProgramName(), id.getText(), reg.getGlobalVarType(id.getText()).getDescriptor()));
+        }
     }
 
     private void visit(GrammarParser.AssignmentStatementContext context) {
