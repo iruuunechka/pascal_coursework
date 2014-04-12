@@ -90,6 +90,21 @@ public class PascalStatementVisitor {
     }
 
     private void visit(GrammarParser.IfStatementContext context) {
+        Utils.checkType(expVisitor.visit(context.expression()), Type.INT_TYPE);
+        LabelNode end = new LabelNode();
+        if (context.statement().size() == 2) {
+            LabelNode elseL = new LabelNode();
+            reg.addInstruction(new JumpInsnNode(Opcodes.IFEQ, elseL));
+            visit(context.statement(0));
+            reg.addInstruction(new JumpInsnNode(Opcodes.GOTO, end));
+            reg.addInstruction(elseL);
+            visit(context.statement(1));
+            reg.addInstruction(end);
+        } else {
+            reg.addInstruction(new JumpInsnNode(Opcodes.IFEQ, end));
+            visit(context.statement(0));
+            reg.addInstruction(end);
+        }
 
     }
 
