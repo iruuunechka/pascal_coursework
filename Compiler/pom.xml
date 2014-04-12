@@ -34,8 +34,8 @@
                         </goals>
                         <phase>generate-sources</phase>
                         <configuration>
-                            <listener>true</listener>
-                            <visitor>true</visitor>
+                            <listener>false</listener>
+                            <visitor>false</visitor>
                             <outputDirectory>src/main/java</outputDirectory>
                         </configuration>
                     </execution>
