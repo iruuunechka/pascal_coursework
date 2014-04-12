@@ -38,6 +38,10 @@ public class PascalRegistry {
         return globalVars.containsKey(name);
     }
 
+    public Type getGlobalVarType(String name) {
+        return globalVars.get(name);
+    }
+
     public void addGlobalVar(String name, Type type) {
         globalVars.put(name, type);
         cn.fields.add(new FieldNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, name, type.getDescriptor(), null, null));
@@ -58,7 +62,4 @@ public class PascalRegistry {
         currentMN.instructions.add(instruction);
     }
 
-    public void addInstruction(InsnList instructions) {
-        currentMN.instructions.add(instructions);
-    }
 }

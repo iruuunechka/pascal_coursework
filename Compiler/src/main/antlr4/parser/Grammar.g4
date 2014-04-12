@@ -28,7 +28,7 @@ statement : ifStatement
             | writeStatement
             | callStatement;
 
-assignmentStatement : IDENTIFIER ('[' expression ']')? ':=' expression ;
+assignmentStatement : name ':=' expression ;
 expression : applicativeExpr (COMPARATOR applicativeExpr)? ;
 applicativeExpr : (SIGN)? multiplicativeExpr (SIGN  multiplicativeExpr)? ;
 

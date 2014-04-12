@@ -24,34 +24,32 @@ public class PascalExpressionVisitor {
         Utils.checkType(visit(context.applicativeExpr(0)), Type.INT_TYPE);
         Utils.checkType(visit(context.applicativeExpr(1)), Type.INT_TYPE);
         LabelNode ln = new LabelNode();
-        InsnList instructions = new InsnList();
         switch (context.COMPARATOR().getText()) {
             case ("<") :
-                instructions.add(new JumpInsnNode(Opcodes.IF_ICMPGE, ln));
+                reg.addInstruction(new JumpInsnNode(Opcodes.IF_ICMPGE, ln));
                 break;
             case (">") :
-                instructions.add(new JumpInsnNode(Opcodes.IF_ICMPLE, ln));
+                reg.addInstruction(new JumpInsnNode(Opcodes.IF_ICMPLE, ln));
                 break;
             case ("<=") :
-                instructions.add(new JumpInsnNode(Opcodes.IF_ICMPGT, ln));
+                reg.addInstruction(new JumpInsnNode(Opcodes.IF_ICMPGT, ln));
                 break;
             case (">=") :
-                instructions.add(new JumpInsnNode(Opcodes.IF_ICMPLT, ln));
+                reg.addInstruction(new JumpInsnNode(Opcodes.IF_ICMPLT, ln));
                 break;
             case ("=") :
-                instructions.add(new JumpInsnNode(Opcodes.IF_ICMPNE, ln));
+                reg.addInstruction(new JumpInsnNode(Opcodes.IF_ICMPNE, ln));
                 break;
             case ("<>") :
-                instructions.add(new JumpInsnNode(Opcodes.IF_ICMPEQ, ln));
+                reg.addInstruction(new JumpInsnNode(Opcodes.IF_ICMPEQ, ln));
                 break;
         }
         LabelNode end = new LabelNode();
-        instructions.add(new InsnNode(Opcodes.ICONST_1));
-        instructions.add(new JumpInsnNode(Opcodes.GOTO, end));
-        instructions.add(ln);
-        instructions.add(new InsnNode(Opcodes.ICONST_0));
-        instructions.add(end);
-        reg.addInstruction(instructions);
+        reg.addInstruction(new InsnNode(Opcodes.ICONST_1));
+        reg.addInstruction(new JumpInsnNode(Opcodes.GOTO, end));
+        reg.addInstruction(ln);
+        reg.addInstruction(new InsnNode(Opcodes.ICONST_0));
+        reg.addInstruction(end);
         return Type.INT_TYPE;
     }
 
@@ -130,7 +128,21 @@ public class PascalExpressionVisitor {
             reg.addInstruction(new LdcInsnNode(Integer.valueOf(context.NUMBER().getText())));
             return Type.INT_TYPE;
         } else if (context.name() != null) {
-            //TODO
+            String varName = context.name().IDENTIFIER().getText();
+            if (!reg.hasGlobalVar(varName)) {
+                throw new IllegalStateException("Undefined variable" + varName);
+            }
+            Type varType = reg.getGlobalVarType(varName);
+            if (context.name().expression() != null) {
+                Utils.checkType(varType, Type.getType(String.class));
+                Utils.checkType(visit(context.name().expression()), Type.INT_TYPE);
+                reg.addInstruction(new FieldInsnNode(Opcodes.GETSTATIC, reg.getProgramName(), varName, varType.getDescriptor()));
+                reg.addInstruction(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(String.class), "charAt", Type.getMethodDescriptor(Type.CHAR_TYPE, Type.INT_TYPE)));
+                return Type.CHAR_TYPE;
+            } else {
+                reg.addInstruction(new FieldInsnNode(Opcodes.GETSTATIC, reg.getProgramName(), varName, varType.getDescriptor()));
+            }
+            return varType;
         } else if (context.callStatement() != null) {
             //TODO
         }

@@ -3,8 +3,7 @@ package compiler;
 import compiler.register.PascalRegistry;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.FieldInsnNode;
-import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.*;
 import parser.GrammarParser;
 
 import java.io.PrintStream;
@@ -59,7 +58,23 @@ public class PascalStatementVisitor {
     }
 
     private void visit(GrammarParser.AssignmentStatementContext context) {
-
+        String varName = context.name().IDENTIFIER().getText();
+        if (reg.hasGlobalVar(varName)) {
+            Type varType = reg.getGlobalVarType(varName);
+            if (context.name().expression() != null) {
+                Utils.checkType(varType, Type.getType(String.class));
+                reg.addInstruction(new FieldInsnNode(Opcodes.GETSTATIC, reg.getProgramName(), varName, varType.getDescriptor()));
+                reg.addInstruction(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(String.class), "toCharArray", Type.getMethodDescriptor(Type.getType(char[].class))));
+                reg.addInstruction(new InsnNode(Opcodes.DUP));
+                Utils.checkType(expVisitor.visit(context.name().expression()), Type.INT_TYPE);
+                Utils.checkType(expVisitor.visit(context.expression()), Type.CHAR_TYPE);
+                reg.addInstruction(new InsnNode(Opcodes.CASTORE));
+                reg.addInstruction(new MethodInsnNode(Opcodes.INVOKESTATIC, Type.getInternalName(String.class), "valueOf", Type.getMethodDescriptor(Type.getType(String.class), Type.getType(char[].class))));
+            } else {
+                Utils.checkType(expVisitor.visit(context.expression()), varType);
+            }
+            reg.addInstruction(new FieldInsnNode(Opcodes.PUTSTATIC, reg.getProgramName(), varName, varType.getDescriptor()));
+        }
     }
 
     private void visit(GrammarParser.CallStatementContext context) {
