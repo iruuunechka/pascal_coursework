@@ -3,9 +3,7 @@ package compiler.register;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -54,5 +52,13 @@ public class PascalRegistry {
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
         cn.accept(cw);
         return cw.toByteArray();
+    }
+
+    public void addInstruction(AbstractInsnNode instruction) {
+        currentMN.instructions.add(instruction);
+    }
+
+    public void addInstruction(InsnList instructions) {
+        currentMN.instructions.add(instructions);
     }
 }

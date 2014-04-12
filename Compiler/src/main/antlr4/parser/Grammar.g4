@@ -8,16 +8,25 @@ functionDeclaration : functionHeading ';' varBlock block ';' ;
 functionHeading : 'FUNCTION' IDENTIFIER ('(' varDeclaration (';' varDeclaration)* ')')? ':' TYPE ;
 
 block : 'BEGIN' (statement ';')* 'END' ;
-statement : 'IF' expression 'THEN' statement ('ELSE' statement)?
-            | 'FOR' assignmentStatement ('TO' | 'DOWNTO') expression 'DO' statement
-            | 'WHILE' expression 'DO' statement 
+
+ifStatement : 'IF' expression 'THEN' statement ('ELSE' statement)? ;
+forStatement : 'FOR' assignmentStatement ('TO' | 'DOWNTO') expression 'DO' statement ;
+whileStatement : 'WHILE' expression 'DO' statement ;
+breakStatement : 'BREAK' ;
+continueStatement : 'CONTINUE' ;
+readStatement : 'READ' '(' IDENTIFIER (',' IDENTIFIER)* ')' ;
+writeStatement : 'WRITE' '(' expressionList ')' ;
+callStatement : IDENTIFIER '(' expressionList ')' ;
+statement : ifStatement
+            | forStatement
             | assignmentStatement
             | block 
-            | 'BREAK' 
-            | 'CONTINUE'
-            |'READ' '(' IDENTIFIER (',' IDENTIFIER)* ')'
-            |'WRITE' '(' expressionList ')'
-            |IDENTIFIER '(' expressionList ')' ;
+            | whileStatement
+            | breakStatement
+            | continueStatement
+            | readStatement
+            | writeStatement
+            | callStatement;
 
 assignmentStatement : IDENTIFIER ('[' expression ']')? ':=' expression ;
 expression : applicativeExpr (COMPARATOR applicativeExpr)? ;
@@ -28,18 +37,20 @@ multiplicativeExpr : term (OPERATOR term)* ;
 term : NUMBER 
       | STRING_EXPRESSION
       | CHAR_EXPRESSION
-      | IDENTIFIER ('[' expression ']')?
-      | IDENTIFIER '(' expressionList ')'
+      | name
+      | callStatement
       | '(' expression ')';
+
+name : IDENTIFIER ('[' expression ']')? ;
 
 expressionList : expression (',' expression)* ;
 
-OPERATOR : '*' | '/' | 'DIV' | 'MOD' ;
+OPERATOR : '*' | '/' | 'MOD' ;
 TYPE : 'INTEGER' | 'STRING' | 'CHAR' ;
 COMPARATOR :  '>=' | '<=' | '=' | '<>' | '>' | '<' ;
 SIGN : '+' | '-' ;
 IDENTIFIER : [a-zA-Z][a-zA-Z0-9]* ;
 NUMBER : [0-9]+ ;
-STRING_EXPRESSION : '\''.*?'\'' ;
 CHAR_EXPRESSION : '\''.'\'' ;
+STRING_EXPRESSION : '\''.*?'\'' ;
 WS :  [ \t\r\n]+ -> skip ;
