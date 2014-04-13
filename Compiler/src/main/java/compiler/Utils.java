@@ -1,5 +1,6 @@
 package compiler;
 
+import compiler.register.PascalRegistry;
 import org.objectweb.asm.Type;
 
 /**
@@ -20,4 +21,23 @@ public class Utils {
             throw new IllegalStateException("Type mismatch:" + t1 + " not equals " + t2);
         }
     }
+
+    public static void checkLocalVarName(String varName, String name) {
+        if (varName.equals(name)) {
+            throw new IllegalStateException("Variable has the same name with function name");
+        }
+    }
+
+    public static Type getVarType(String varName, PascalRegistry reg) {
+        Type varType;
+        if (reg.hasLocalVar(varName)) {
+            varType = reg.getLocalVarType(varName);
+        } else if (reg.hasGlobalVar(varName)) {
+            varType = reg.getGlobalVarType(varName);
+        } else {
+            throw new IllegalStateException("Variable " + varName + " does not exists");
+        }
+        return varType;
+    }
+
 }

@@ -7,6 +7,9 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import parser.GrammarParser;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Irene Petrova
  */
@@ -93,9 +96,9 @@ public class PascalExpressionVisitor {
     public Type visit(GrammarParser.MultiplicativeExprContext context) {
         if (!context.OPERATOR().isEmpty()) {
             GrammarParser.TermContext tc = context.term(0);
-            Utils.checkType(visit(tc), Type.INT_TYPE);
+            Utils.checkType(visit((GrammarParser.TermContext) tc), Type.INT_TYPE);
             for (int i = 1; i < context.term().size(); ++i) {
-                Utils.checkType(visit(context.term(i)), Type.INT_TYPE);
+                Utils.checkType(visit((GrammarParser.TermContext) context.term(i)), Type.INT_TYPE);
                 switch(context.OPERATOR(i - 1).getText()) {
                     case ("*") :
                         reg.addInstruction(new InsnNode(Opcodes.IMUL));
@@ -110,7 +113,7 @@ public class PascalExpressionVisitor {
             }
             return Type.INT_TYPE;
         } else {
-            return visit(context.term(0));
+            return visit((GrammarParser.TermContext) context.term(0));
         }
     }
 
@@ -130,26 +133,45 @@ public class PascalExpressionVisitor {
         } else if (context.name() != null) {
             return visit(context.name());
         } else if (context.callStatement() != null) {
-            //TODO
+            return visit(context.callStatement());
         }
-        return Type.VOID_TYPE;
+        throw  new IllegalStateException("Unknown expression " + context.getText());
+    }
+
+    public Type visit(GrammarParser.CallStatementContext context) {
+        List<Type> inputList = new ArrayList<>();
+        String name = context.IDENTIFIER().getText();
+        for (GrammarParser.ExpressionContext econtext : context.expressionList().expression()) {
+            inputList.add(visit(econtext));
+        }
+        Type[] input = inputList.toArray(new Type[inputList.size()]);
+        if (!reg.hasFunction(name, input)) {
+            throw new IllegalStateException("No such method " + name + " applicable to this parameters");
+        }
+        reg.addInstruction(new MethodInsnNode(Opcodes.INVOKESTATIC, reg.getProgramName(), name, reg.getFunctionType(name, input).getDescriptor()));
+        return reg.getFunctionOutputType(name, input);
     }
 
     public Type visit(GrammarParser.NameContext context) {
         String varName = context.IDENTIFIER().getText();
-        if (!reg.hasGlobalVar(varName)) {
-            throw new IllegalStateException("Undefined variable" + varName);
-        }
-        Type varType = reg.getGlobalVarType(varName);
+        Type varType = Utils.getVarType(varName, reg);
         if (context.expression() != null) {
             Utils.checkType(varType, Type.getType(String.class));
             Utils.checkType(visit(context.expression()), Type.INT_TYPE);
-            reg.addInstruction(new FieldInsnNode(Opcodes.GETSTATIC, reg.getProgramName(), varName, varType.getDescriptor()));
+            loadVar(varName, varType);
             reg.addInstruction(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(String.class), "charAt", Type.getMethodDescriptor(Type.CHAR_TYPE, Type.INT_TYPE)));
             return Type.CHAR_TYPE;
         } else {
-            reg.addInstruction(new FieldInsnNode(Opcodes.GETSTATIC, reg.getProgramName(), varName, varType.getDescriptor()));
+            loadVar(varName, varType);
         }
         return varType;
+    }
+
+    private void loadVar(String varName, Type varType) {
+        if (reg.hasLocalVar(varName)){
+            reg.addInstruction(new VarInsnNode(varType.equals(Type.getType(String.class)) ? Opcodes.ALOAD : Opcodes.ILOAD, reg.getLocalVarIndex(varName)));
+        } else {
+            reg.addInstruction(new FieldInsnNode(Opcodes.GETSTATIC, reg.getProgramName(), varName, varType.getDescriptor()));
+        }
     }
 }

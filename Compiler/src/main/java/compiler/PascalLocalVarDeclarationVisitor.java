@@ -8,10 +8,10 @@ import parser.GrammarParser;
 /**
  * @author Irene Petrova
  */
-public class PascalGlobalVarDeclarationVisitor implements PascalVarDeclarationVisitor {
+public class PascalLocalVarDeclarationVisitor implements PascalVarDeclarationVisitor{
     private PascalRegistry reg;
 
-    public PascalGlobalVarDeclarationVisitor(PascalRegistry registry) {
+    public PascalLocalVarDeclarationVisitor(PascalRegistry registry) {
         reg = registry;
     }
 
@@ -19,10 +19,11 @@ public class PascalGlobalVarDeclarationVisitor implements PascalVarDeclarationVi
     public void visit(GrammarParser.VarDeclarationContext context) {
         Type type = Utils.getType(context.TYPE().getText());
         for (TerminalNode id : context.IDENTIFIER()) {
-            if (reg.hasGlobalVar(id.getText())) {
-                throw new IllegalStateException("Duplicate global variable" + id.getText());
+            if (reg.hasLocalVar(id.getText())) {
+                throw new IllegalStateException("Dublicate local variable" + id.getText());
             }
-            reg.addGlobalVar(id.getText(), type);
+            Utils.checkLocalVarName(id.getText(), reg.getCurrentMethodName());
+            reg.addLocalVar(id.getText(), type);
         }
     }
 }
