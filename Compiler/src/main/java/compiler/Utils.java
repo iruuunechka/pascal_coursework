@@ -18,7 +18,7 @@ public class Utils {
 
     public static void checkType (Type t1, Type t2) {
         if (!t1.equals(t2)) {
-            throw new IllegalStateException("Type mismatch:" + t1 + " not equals " + t2);
+            throw new IllegalStateException("Type mismatch:" + t1.getClassName() + " not equals " + t2.getClassName());
         }
     }
 

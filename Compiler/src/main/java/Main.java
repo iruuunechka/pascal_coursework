@@ -16,7 +16,7 @@ import java.io.InputStream;
 public class Main {
     public static void main(String[] args) {
         try {
-            InputStream is = new FileInputStream("input.pas");
+            InputStream is = new FileInputStream(args[0]);
             ANTLRInputStream ais = new ANTLRInputStream(is);
             GrammarLexer lex = new GrammarLexer(ais);
             GrammarParser pars = new GrammarParser(new CommonTokenStream(lex));

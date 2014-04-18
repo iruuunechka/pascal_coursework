@@ -56,6 +56,8 @@ public class PascalStatementVisitor {
             Type type = expVisitor.visit(econtext);
             reg.addInstruction(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(PrintStream.class), "print", Type.getMethodDescriptor(Type.VOID_TYPE, type)));
         }
+        reg.addInstruction(new FieldInsnNode(Opcodes.GETSTATIC, Type.getInternalName(System.class), "out", Type.getDescriptor(PrintStream.class)));
+        reg.addInstruction(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(PrintStream.class), "println", Type.getMethodDescriptor(Type.VOID_TYPE)));
     }
 
     private void visit(GrammarParser.ReadStatementContext context) {

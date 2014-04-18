@@ -157,8 +157,8 @@ public class PascalExpressionVisitor {
         Type varType = Utils.getVarType(varName, reg);
         if (context.expression() != null) {
             Utils.checkType(varType, Type.getType(String.class));
-            Utils.checkType(visit(context.expression()), Type.INT_TYPE);
             loadVar(varName, varType);
+            Utils.checkType(visit(context.expression()), Type.INT_TYPE);
             reg.addInstruction(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(String.class), "charAt", Type.getMethodDescriptor(Type.CHAR_TYPE, Type.INT_TYPE)));
             return Type.CHAR_TYPE;
         } else {
